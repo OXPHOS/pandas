@@ -129,7 +129,7 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
     if not dropna:
         try:
             m = MultiIndex.from_arrays(cartesian_product(table.index.levels),
-                                       names=table.index.names)
+                                       names=table.index.names, dropna=False)
             table = table.reindex_axis(m, axis=0)
         except AttributeError:
             pass  # it's a single level
@@ -226,7 +226,7 @@ def _add_margins(table, data, values, rows, cols, aggfunc,
 
     row_names = result.index.names
     try:
-        result = result.append(margin_dummy)
+        result = result.append(margin_dummy, dropna=dropna)
     except TypeError:
 
         # we cannot reshape, so coerce the axis

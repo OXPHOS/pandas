@@ -1703,7 +1703,7 @@ class BaseGrouper(object):
     def result_index(self):
         print self.dropna
         if not self.compressed and len(self.groupings) == 1:
-            return self.groupings[0].group_index(self.dropna).rename(self.names[0])
+            return self.groupings[0].group_index.rename(self.names[0])
         return MultiIndex(levels=[ping.group_index for ping in self.groupings],
                           labels=self.recons_labels,
                           verify_integrity=False,
@@ -1799,7 +1799,7 @@ class BaseGrouper(object):
                                       (how, dtype_str))
         return func, dtype_str
 
-    def _cython_operation(self, kind, values, how, axis, dropna):
+    def _cython_operation(self, kind, values, how, axis, dropna=True):
         assert kind in ['transform', 'aggregate']
 
         arity = self._cython_arity.get(how, 1)
@@ -2220,7 +2220,7 @@ class Grouping(object):
                 self.grouper = level_values.map(self.grouper)
             else:
                 # all levels may not be observed
-                labels, uniques = algos.factorize(inds, sort=True)
+                labels, uniques = algos.factorize(inds, sort=True, dropna=dropna)
 
                 if len(uniques) > 0 and uniques[0] == -1:
                     # handle NAs
@@ -3172,7 +3172,7 @@ class NDFrameGroupBy(GroupBy):
 
         for block in data.blocks:
             result, _ = self.grouper.aggregate(
-                block.values, how, axis=agg_axis, dropna=dropna)
+                block.values, how, axis=agg_axis)
 
             # see if we can cast the block back to the original dtype
             result = block._try_coerce_and_cast_result(result)
@@ -3201,6 +3201,7 @@ class NDFrameGroupBy(GroupBy):
     def aggregate(self, arg, *args, **kwargs):
 
         _level = kwargs.pop('_level', None)
+        dropna = kwargs.pop('dropna', True)
         result, how = self._aggregate(arg, _level=_level, *args, **kwargs)
         if how is None:
             return result

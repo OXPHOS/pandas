@@ -874,10 +874,10 @@ class MultiIndex(Index):
             names = [getattr(arr, "name", None) for arr in arrays]
 
         return MultiIndex(levels=levels, labels=labels, sortorder=sortorder,
-                          names=names, verify_integrity=False)
+                          names=names, verify_integrity=False, dropna=dropna)
 
     @classmethod
-    def from_tuples(cls, tuples, sortorder=None, names=None):
+    def from_tuples(cls, tuples, sortorder=None, names=None, dropna=True):
         """
         Convert list of tuples to MultiIndex
 
@@ -919,7 +919,7 @@ class MultiIndex(Index):
         else:
             arrays = lzip(*tuples)
 
-        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names)
+        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names, dropna=dropna)
 
     @classmethod
     def from_product(cls, iterables, sortorder=None, names=None):
@@ -1097,7 +1097,7 @@ class MultiIndex(Index):
 
         # if all(isinstance(x, MultiIndex) for x in other):
         try:
-            return MultiIndex.from_tuples(new_tuples, names=self.names)
+            return MultiIndex.from_tuples(new_tuples, names=self.names, dropna=dropna)
         except:
             return Index(new_tuples)
 
