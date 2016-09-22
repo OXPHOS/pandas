@@ -794,7 +794,7 @@ class _GroupBy(PandasObject, SelectionMixin):
 
         return self._wrap_transformed_output(output, names)
 
-    def _cython_agg_general(self, how, numeric_only=True):
+    def _cython_agg_general(self, how, numeric_only=True, dropna=True):
         output = {}
         for name, obj in self._iterate_slices():
             is_numeric = is_numeric_dtype(obj.dtype)
