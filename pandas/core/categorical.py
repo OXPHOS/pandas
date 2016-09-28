@@ -2066,4 +2066,5 @@ def _factorize_from_iterables(iterables, dropna=True):
     if len(iterables) == 0:
         # For consistency, it should return a list of 2 tuples.
         return [(), ()]
-    return lzip(*[_factorize_from_iterable(it, dropna=dropna) for it in iterables])
+    return lzip(*[_factorize_from_iterable(it, dropna=dropna)
+                  for it in iterables])
