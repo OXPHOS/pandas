@@ -919,7 +919,8 @@ class MultiIndex(Index):
         else:
             arrays = lzip(*tuples)
 
-        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names, dropna=dropna)
+        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names,
+                                      dropna=dropna)
 
     @classmethod
     def from_product(cls, iterables, sortorder=None, names=None):
@@ -1079,7 +1080,6 @@ class MultiIndex(Index):
         -------
         appended : Index
         """
-        print "call append"
         if not isinstance(other, (list, tuple)):
             other = [other]
 
@@ -1090,14 +1090,16 @@ class MultiIndex(Index):
                 label = self.get_level_values(i)
                 appended = [o.get_level_values(i) for o in other]
                 arrays.append(label.append(appended))
-            return MultiIndex.from_arrays(arrays, names=self.names, dropna=dropna)
+            return MultiIndex.from_arrays(arrays, names=self.names,
+                                          dropna=dropna)
 
         to_concat = (self.values, ) + tuple(k._values for k in other)
         new_tuples = np.concatenate(to_concat)
 
         # if all(isinstance(x, MultiIndex) for x in other):
         try:
-            return MultiIndex.from_tuples(new_tuples, names=self.names, dropna=dropna)
+            return MultiIndex.from_tuples(new_tuples, names=self.names,
+                                          dropna=dropna)
         except:
             return Index(new_tuples)
 

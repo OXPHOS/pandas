@@ -118,7 +118,7 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
             data = data[to_filter]
 
     grouped = data.groupby(keys, dropna=dropna)
-    agged = grouped.agg(aggfunc, dropna=dropna)
+    agged = grouped.agg(aggfunc)
 
     table = agged
     if table.index.nlevels > 1:
@@ -272,10 +272,12 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
             return (key, margins_name) + ('',) * (len(cols) - 1)
 
         if len(rows) > 0:
-            margin = data[rows + values].groupby(rows, dropna=dropna).agg(aggfunc)
+            margin = data[rows + values].groupby(rows,
+                                                 dropna=dropna).agg(aggfunc)
             cat_axis = 1
 
-            for key, piece in table.groupby(level=0, axis=cat_axis, dropna=dropna):
+            for key, piece in table.groupby(level=0, axis=cat_axis,
+                                            dropna=dropna):
                 all_key = _all_key(key)
 
                 # we are going to mutate this, so need to copy!
@@ -309,7 +311,8 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
         margin_keys = table.columns
 
     if len(cols) > 0:
-        row_margin = data[cols + values].groupby(cols, dropna=dropna).agg(aggfunc)
+        row_margin = data[cols + values].groupby(cols,
+                                                 dropna=dropna).agg(aggfunc)
         row_margin = row_margin.stack()
 
         # slight hack

@@ -995,7 +995,8 @@ class TestCrosstab(tm.TestCase):
         df = DataFrame({'a': [1, np.nan, np.nan, np.nan, 2, np.nan],
                         'b': [3, np.nan, 4, 4, 4, 4]})
         actual = pd.crosstab(df.a, df.b, margins=True, dropna=False)
-        expected = pd.DataFrame([[1, 0, 0, 1], [0, 1, 0, 1], [0, 3, 1, 4], [1, 4, 0, 6]])
+        expected = pd.DataFrame([[1, 0, 0, 1], [0, 1, 0, 1],
+                                 [0, 3, 1, 4], [1, 4, 0, 6]])
         expected.index = Index([1.0, 2.0, np.nan, 'All'], name='a')
         expected.columns = Index([3.0, 4.0, np.nan, 'All'], name='b')
         tm.assert_frame_equal(actual, expected)
@@ -1009,8 +1010,10 @@ class TestCrosstab(tm.TestCase):
 
         actual = pd.crosstab(a, [b, c], rownames=['a'],
                              colnames=['b', 'c'], margins=True, dropna=False)
-        m = MultiIndex.from_arrays([[np.nan, np.nan, 'one', 'one', 'two', 'two', 'All'],
-                                    ['dull', 'shiny', 'dull', 'shiny', 'dull', 'shiny', '']],
+        m = MultiIndex.from_arrays([[np.nan, np.nan, 'one', 'one',
+                                     'two', 'two', 'All'],
+                                    ['dull', 'shiny', 'dull', 'shiny',
+                                     'dull', 'shiny', '']],
                                    names=['b', 'c'], dropna=False)
         expected = DataFrame([[0, 0, 1, 0, 1, 0, 2], [0, 1, 2, 0, 1, 1, 5],
                               [0, 1, 3, 0, 2, 1, 7]], columns=m)
@@ -1019,11 +1022,13 @@ class TestCrosstab(tm.TestCase):
 
         actual = pd.crosstab([a, b], c, rownames=['a', 'b'],
                              colnames=['c'], margins=True, dropna=False)
-        m = MultiIndex.from_arrays([['bar', 'bar', 'bar', 'foo', 'foo', 'foo', 'All'],
-                                    [np.nan, 'one', 'two', np.nan, 'one', 'two', '']],
+        m = MultiIndex.from_arrays([['bar', 'bar', 'bar', 'foo',
+                                     'foo', 'foo', 'All'],
+                                    [np.nan, 'one', 'two', np.nan,
+                                     'one', 'two', '']],
                                    names=['a', 'b'], dropna=False)
-        expected = DataFrame([[0, 0, 0], [1, 0, 1], [1, 0, 1], [0, 1, 1], [2, 0, 2], [1, 1, 2],
-                              [5, 2, 7]], index=m)
+        expected = DataFrame([[0, 0, 0], [1, 0, 1], [1, 0, 1], [0, 1, 1],
+                              [2, 0, 2], [1, 1, 2], [5, 2, 7]], index=m)
         expected.columns = Index(['dull', 'shiny', 'All'], name='c')
         tm.assert_frame_equal(actual, expected)
 

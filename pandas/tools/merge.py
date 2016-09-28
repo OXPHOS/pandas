@@ -1623,7 +1623,6 @@ class _Concatenator(object):
 
 
 def _concat_indexes(indexes, dropna=True):
-    print type(indexes[0])
     return indexes[0].append(indexes[1:], dropna=dropna)
 
 

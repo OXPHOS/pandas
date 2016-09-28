@@ -111,7 +111,8 @@ def _groupby_function(name, alias, npfunc, numeric_only=True,
     def f(self, dropna=True):
         self._set_group_selection()
         try:
-            return self._cython_agg_general(alias, numeric_only=numeric_only, dropna=dropna)
+            return self._cython_agg_general(alias, numeric_only=numeric_only,
+                                            dropna=dropna)
         except AssertionError as e:
             raise SpecificationError(str(e))
         except Exception:
@@ -364,7 +365,6 @@ class _GroupBy(PandasObject, SelectionMixin):
         self.dropna = dropna
 
         if grouper is None:
-            print "grouper is none"
             grouper, exclusions, obj = _get_grouper(obj, keys,
                                                     axis=axis,
                                                     level=level,
@@ -1689,7 +1689,6 @@ class BaseGrouper(object):
 
     @cache_readonly
     def ngroups(self):
-        print "call 1687", self.dropna
         return len(self.result_index)
 
     @property
@@ -1701,9 +1700,9 @@ class BaseGrouper(object):
 
     @cache_readonly
     def result_index(self):
-        print self.dropna
         if not self.compressed and len(self.groupings) == 1:
             return self.groupings[0].group_index.rename(self.names[0])
+
         return MultiIndex(levels=[ping.group_index for ping in self.groupings],
                           labels=self.recons_labels,
                           verify_integrity=False,
@@ -2178,7 +2177,7 @@ class Grouping(object):
 
     def __init__(self, index, grouper=None, obj=None, name=None, level=None,
                  sort=True, in_axis=False, dropna=True):
-        print "initiate grouping", dropna
+
         self.name = name
         self.level = level
         self.grouper = _convert_grouper(index, grouper)
@@ -2220,7 +2219,8 @@ class Grouping(object):
                 self.grouper = level_values.map(self.grouper)
             else:
                 # all levels may not be observed
-                labels, uniques = algos.factorize(inds, sort=True, dropna=dropna)
+                labels, uniques = algos.factorize(inds, sort=True,
+                                                  dropna=dropna)
 
                 if len(uniques) > 0 and uniques[0] == -1:
                     # handle NAs
@@ -2337,14 +2337,14 @@ class Grouping(object):
 
     @property
     def group_index(self):
-        print "group_index.dropna", self.dropna
         if self._group_index is None:
             self._make_labels()
         return self._group_index
 
     def _make_labels(self):
         if self._labels is None or self._group_index is None:
-            labels, uniques = algos.factorize(self.grouper, sort=self.sort, dropna=self.dropna)
+            labels, uniques = algos.factorize(self.grouper, sort=self.sort,
+                                              dropna=self.dropna)
             uniques = Index(uniques, name=self.name)
             self._labels = labels
             self._group_index = uniques
@@ -2374,7 +2374,7 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
     a BaseGrouper.
 
     """
-    print "_get_grouper.dropna", dropna
+
     group_axis = obj._get_axis(axis)
 
     # validate that the passed level is compatible with the passed
@@ -2505,7 +2505,8 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
         raise ValueError('No group keys passed!')
 
     # create the internals grouper
-    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated, dropna=dropna)
+    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated,
+                          dropna=dropna)
 
     return grouper, exclusions, obj
 
@@ -3171,6 +3172,7 @@ class NDFrameGroupBy(GroupBy):
             data = data.get_numeric_data(copy=False)
 
         for block in data.blocks:
+
             result, _ = self.grouper.aggregate(
                 block.values, how, axis=agg_axis)
 
@@ -3201,7 +3203,6 @@ class NDFrameGroupBy(GroupBy):
     def aggregate(self, arg, *args, **kwargs):
 
         _level = kwargs.pop('_level', None)
-        dropna = kwargs.pop('dropna', True)
         result, how = self._aggregate(arg, _level=_level, *args, **kwargs)
         if how is None:
             return result

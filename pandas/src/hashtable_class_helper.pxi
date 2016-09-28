@@ -828,7 +828,6 @@ cdef class PyObjectHashTable(HashTable):
     def get_labels(self, ndarray[object] values, ObjectVector uniques,
                    Py_ssize_t count_prior, int64_t na_sentinel,
                    bint check_null=True):
-        print "check_null", check_null
         cdef:
             Py_ssize_t i, n = len(values)
             int64_t[:] labels
@@ -836,7 +835,7 @@ cdef class PyObjectHashTable(HashTable):
             int ret = 0
             object val
             khiter_t k
-        print "pyx.check_null", check_null
+
         labels = np.empty(n, dtype=np.int64)
 
         for i in range(n):

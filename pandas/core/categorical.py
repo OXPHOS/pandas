@@ -287,7 +287,8 @@ class Categorical(PandasObject):
             try:
                 codes, categories = factorize(values, sort=True, dropna=dropna)
             except TypeError:
-                codes, categories = factorize(values, sort=False, dropna=dropna)
+                codes, categories = factorize(values, sort=False,
+                                              dropna=dropna)
                 if ordered:
                     # raise, as we don't have a sortable data structure and so
                     # the user should give us one by specifying categories
@@ -2066,4 +2067,3 @@ def _factorize_from_iterables(iterables, dropna=True):
         # For consistency, it should return a list of 2 tuples.
         return [(), ()]
     return lzip(*[_factorize_from_iterable(it, dropna=dropna) for it in iterables])
-

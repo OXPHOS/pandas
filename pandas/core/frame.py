@@ -4323,7 +4323,8 @@ class DataFrame(NDFrame):
     # ----------------------------------------------------------------------
     # Merging / joining methods
 
-    def append(self, other, ignore_index=False, verify_integrity=False, dropna=True):
+    def append(self, other, ignore_index=False, verify_integrity=False,
+               dropna=True):
         """
         Append rows of `other` to the end of this frame, returning a new
         object. Columns not in this frame are added as new columns.
