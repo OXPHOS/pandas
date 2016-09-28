@@ -108,11 +108,10 @@ def _groupby_function(name, alias, npfunc, numeric_only=True,
     @Substitution(name='groupby', f=name)
     @Appender(_doc_template)
     @Appender(_local_template)
-    def f(self, dropna=True):
+    def f(self):
         self._set_group_selection()
         try:
-            return self._cython_agg_general(alias, numeric_only=numeric_only,
-                                            dropna=dropna)
+            return self._cython_agg_general(alias, numeric_only=numeric_only)
         except AssertionError as e:
             raise SpecificationError(str(e))
         except Exception:
@@ -362,7 +361,6 @@ class _GroupBy(PandasObject, SelectionMixin):
         self.group_keys = group_keys
         self.squeeze = squeeze
         self.mutated = kwargs.pop('mutated', False)
-        self.dropna = dropna
 
         if grouper is None:
             grouper, exclusions, obj = _get_grouper(obj, keys,
@@ -1529,14 +1527,13 @@ class BaseGrouper(object):
     """
 
     def __init__(self, axis, groupings, sort=True, group_keys=True,
-                 mutated=False, dropna=True):
+                 mutated=False):
         self._filter_empty_groups = self.compressed = len(groupings) != 1
         self.axis = axis
         self.groupings = groupings
         self.sort = sort
         self.group_keys = group_keys
         self.mutated = mutated
-        self.dropna = dropna
 
     @property
     def shape(self):
@@ -2505,8 +2502,7 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
         raise ValueError('No group keys passed!')
 
     # create the internals grouper
-    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated,
-                          dropna=dropna)
+    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated)
 
     return grouper, exclusions, obj
 
@@ -3135,9 +3131,9 @@ class NDFrameGroupBy(GroupBy):
                 continue
             yield val, slicer(val)
 
-    def _cython_agg_general(self, how, numeric_only=True, dropna=True):
+    def _cython_agg_general(self, how, numeric_only=True):
         new_items, new_blocks = self._cython_agg_blocks(
-            how, numeric_only=numeric_only, dropna=dropna)
+            how, numeric_only=numeric_only)
         return self._wrap_agged_blocks(new_items, new_blocks)
 
     def _wrap_agged_blocks(self, items, blocks):
@@ -3163,7 +3159,7 @@ class NDFrameGroupBy(GroupBy):
 
     _block_agg_axis = 0
 
-    def _cython_agg_blocks(self, how, numeric_only=True, dropna=True):
+    def _cython_agg_blocks(self, how, numeric_only=True):
         data, agg_axis = self._get_data_to_aggregate()
 
         new_blocks = []
