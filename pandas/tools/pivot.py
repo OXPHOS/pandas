@@ -226,7 +226,7 @@ def _add_margins(table, data, values, rows, cols, aggfunc,
 
     row_names = result.index.names
     try:
-        result = result.append(margin_dummy, dropna=dropna)
+        result = result.append(margin_dummy)
     except TypeError:
 
         # we cannot reshape, so coerce the axis
