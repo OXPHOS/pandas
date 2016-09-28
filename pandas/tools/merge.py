@@ -1269,7 +1269,7 @@ def _get_join_keys(llab, rlab, shape, sort):
 
 def concat(objs, axis=0, join='outer', join_axes=None, ignore_index=False,
            keys=None, levels=None, names=None, verify_integrity=False,
-           copy=True):
+           copy=True, dropna=True):
     """
     Concatenate pandas objects along a particular axis with optional set logic
     along the other axes. Can also add a layer of hierarchical indexing on the
@@ -1322,7 +1322,7 @@ def concat(objs, axis=0, join='outer', join_axes=None, ignore_index=False,
                        ignore_index=ignore_index, join=join,
                        keys=keys, levels=levels, names=names,
                        verify_integrity=verify_integrity,
-                       copy=copy)
+                       copy=copy, dropna=dropna)
     return op.get_result()
 
 
@@ -1332,8 +1332,10 @@ class _Concatenator(object):
     """
 
     def __init__(self, objs, axis=0, join='outer', join_axes=None,
-                 keys=None, levels=None, names=None,
+                 keys=None, levels=None, names=None, dropna=True,
                  ignore_index=False, verify_integrity=False, copy=True):
+        self.dropna = dropna
+
         if isinstance(objs, (NDFrame, compat.string_types)):
             raise TypeError('first argument must be an iterable of pandas '
                             'objects, you passed an object of type '
@@ -1603,7 +1605,7 @@ class _Concatenator(object):
             return idx
 
         if self.keys is None:
-            concat_axis = _concat_indexes(indexes)
+            concat_axis = _concat_indexes(indexes, dropna=self.dropna)
         else:
             concat_axis = _make_concat_multiindex(indexes, self.keys,
                                                   self.levels, self.names)
@@ -1620,8 +1622,9 @@ class _Concatenator(object):
                                  % str(overlap))
 
 
-def _concat_indexes(indexes):
-    return indexes[0].append(indexes[1:])
+def _concat_indexes(indexes, dropna=True):
+    print type(indexes[0])
+    return indexes[0].append(indexes[1:], dropna=dropna)
 
 
 def _make_concat_multiindex(indexes, keys, levels=None, names=None):

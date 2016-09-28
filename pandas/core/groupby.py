@@ -108,10 +108,10 @@ def _groupby_function(name, alias, npfunc, numeric_only=True,
     @Substitution(name='groupby', f=name)
     @Appender(_doc_template)
     @Appender(_local_template)
-    def f(self):
+    def f(self, dropna=True):
         self._set_group_selection()
         try:
-            return self._cython_agg_general(alias, numeric_only=numeric_only)
+            return self._cython_agg_general(alias, numeric_only=numeric_only, dropna=dropna)
         except AssertionError as e:
             raise SpecificationError(str(e))
         except Exception:
@@ -338,7 +338,7 @@ class _GroupBy(PandasObject, SelectionMixin):
     _group_selection = None
     _apply_whitelist = frozenset([])
 
-    def __init__(self, obj, keys=None, axis=0, level=None,
+    def __init__(self, obj, keys=None, axis=0, level=None, dropna=True,
                  grouper=None, exclusions=None, selection=None, as_index=True,
                  sort=True, group_keys=True, squeeze=False, **kwargs):
 
@@ -361,13 +361,16 @@ class _GroupBy(PandasObject, SelectionMixin):
         self.group_keys = group_keys
         self.squeeze = squeeze
         self.mutated = kwargs.pop('mutated', False)
+        self.dropna = dropna
 
         if grouper is None:
+            print "grouper is none"
             grouper, exclusions, obj = _get_grouper(obj, keys,
                                                     axis=axis,
                                                     level=level,
                                                     sort=sort,
-                                                    mutated=self.mutated)
+                                                    mutated=self.mutated,
+                                                    dropna=dropna)
 
         self.obj = obj
         self.axis = obj._get_axis_number(axis)
@@ -1526,13 +1529,14 @@ class BaseGrouper(object):
     """
 
     def __init__(self, axis, groupings, sort=True, group_keys=True,
-                 mutated=False):
+                 mutated=False, dropna=True):
         self._filter_empty_groups = self.compressed = len(groupings) != 1
         self.axis = axis
         self.groupings = groupings
         self.sort = sort
         self.group_keys = group_keys
         self.mutated = mutated
+        self.dropna = dropna
 
     @property
     def shape(self):
@@ -1685,6 +1689,7 @@ class BaseGrouper(object):
 
     @cache_readonly
     def ngroups(self):
+        print "call 1687", self.dropna
         return len(self.result_index)
 
     @property
@@ -1696,9 +1701,9 @@ class BaseGrouper(object):
 
     @cache_readonly
     def result_index(self):
+        print self.dropna
         if not self.compressed and len(self.groupings) == 1:
-            return self.groupings[0].group_index.rename(self.names[0])
-
+            return self.groupings[0].group_index(self.dropna).rename(self.names[0])
         return MultiIndex(levels=[ping.group_index for ping in self.groupings],
                           labels=self.recons_labels,
                           verify_integrity=False,
@@ -1794,7 +1799,7 @@ class BaseGrouper(object):
                                       (how, dtype_str))
         return func, dtype_str
 
-    def _cython_operation(self, kind, values, how, axis):
+    def _cython_operation(self, kind, values, how, axis, dropna):
         assert kind in ['transform', 'aggregate']
 
         arity = self._cython_arity.get(how, 1)
@@ -2172,8 +2177,8 @@ class Grouping(object):
     """
 
     def __init__(self, index, grouper=None, obj=None, name=None, level=None,
-                 sort=True, in_axis=False):
-
+                 sort=True, in_axis=False, dropna=True):
+        print "initiate grouping", dropna
         self.name = name
         self.level = level
         self.grouper = _convert_grouper(index, grouper)
@@ -2181,6 +2186,7 @@ class Grouping(object):
         self.sort = sort
         self.obj = obj
         self.in_axis = in_axis
+        self.dropna = dropna
 
         # right place for this?
         if isinstance(grouper, (Series, Index)) and name is None:
@@ -2331,13 +2337,14 @@ class Grouping(object):
 
     @property
     def group_index(self):
+        print "group_index.dropna", self.dropna
         if self._group_index is None:
             self._make_labels()
         return self._group_index
 
     def _make_labels(self):
         if self._labels is None or self._group_index is None:
-            labels, uniques = algos.factorize(self.grouper, sort=self.sort)
+            labels, uniques = algos.factorize(self.grouper, sort=self.sort, dropna=self.dropna)
             uniques = Index(uniques, name=self.name)
             self._labels = labels
             self._group_index = uniques
@@ -2349,7 +2356,7 @@ class Grouping(object):
 
 
 def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
-                 mutated=False):
+                 mutated=False, dropna=True):
     """
     create and return a BaseGrouper, which is an internal
     mapping of how to create the grouper indexers.
@@ -2367,7 +2374,7 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
     a BaseGrouper.
 
     """
-
+    print "_get_grouper.dropna", dropna
     group_axis = obj._get_axis(axis)
 
     # validate that the passed level is compatible with the passed
@@ -2488,7 +2495,8 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
                         name=name,
                         level=level,
                         sort=sort,
-                        in_axis=in_axis) \
+                        in_axis=in_axis,
+                        dropna=dropna) \
             if not isinstance(gpr, Grouping) else gpr
 
         groupings.append(ping)
@@ -2497,7 +2505,7 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
         raise ValueError('No group keys passed!')
 
     # create the internals grouper
-    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated)
+    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated, dropna=dropna)
 
     return grouper, exclusions, obj
 
@@ -3126,9 +3134,9 @@ class NDFrameGroupBy(GroupBy):
                 continue
             yield val, slicer(val)
 
-    def _cython_agg_general(self, how, numeric_only=True):
+    def _cython_agg_general(self, how, numeric_only=True, dropna=True):
         new_items, new_blocks = self._cython_agg_blocks(
-            how, numeric_only=numeric_only)
+            how, numeric_only=numeric_only, dropna=dropna)
         return self._wrap_agged_blocks(new_items, new_blocks)
 
     def _wrap_agged_blocks(self, items, blocks):
@@ -3154,7 +3162,7 @@ class NDFrameGroupBy(GroupBy):
 
     _block_agg_axis = 0
 
-    def _cython_agg_blocks(self, how, numeric_only=True):
+    def _cython_agg_blocks(self, how, numeric_only=True, dropna=True):
         data, agg_axis = self._get_data_to_aggregate()
 
         new_blocks = []
@@ -3163,9 +3171,8 @@ class NDFrameGroupBy(GroupBy):
             data = data.get_numeric_data(copy=False)
 
         for block in data.blocks:
-
             result, _ = self.grouper.aggregate(
-                block.values, how, axis=agg_axis)
+                block.values, how, axis=agg_axis, dropna=dropna)
 
             # see if we can cast the block back to the original dtype
             result = block._try_coerce_and_cast_result(result)

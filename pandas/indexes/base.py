@@ -1407,7 +1407,7 @@ class Index(IndexOpsMixin, StringAccessorMixin, PandasObject):
         else:
             return result
 
-    def append(self, other):
+    def append(self, other, dropna=True):
         """
         Append a collection of Index options together
 

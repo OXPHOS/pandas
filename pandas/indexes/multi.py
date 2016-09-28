@@ -829,7 +829,7 @@ class MultiIndex(Index):
         return 0
 
     @classmethod
-    def from_arrays(cls, arrays, sortorder=None, names=None):
+    def from_arrays(cls, arrays, sortorder=None, names=None, dropna=True):
         """
         Convert arrays to MultiIndex
 
@@ -869,7 +869,7 @@ class MultiIndex(Index):
 
         from pandas.core.categorical import _factorize_from_iterables
 
-        labels, levels = _factorize_from_iterables(arrays)
+        labels, levels = _factorize_from_iterables(arrays, dropna)
         if names is None:
             names = [getattr(arr, "name", None) for arr in arrays]
 
@@ -1067,7 +1067,7 @@ class MultiIndex(Index):
             taken = [lab.take(indices) for lab in self.labels]
         return taken
 
-    def append(self, other):
+    def append(self, other, dropna=True):
         """
         Append a collection of Index options together
 
@@ -1079,6 +1079,7 @@ class MultiIndex(Index):
         -------
         appended : Index
         """
+        print "call append"
         if not isinstance(other, (list, tuple)):
             other = [other]
 
@@ -1089,7 +1090,7 @@ class MultiIndex(Index):
                 label = self.get_level_values(i)
                 appended = [o.get_level_values(i) for o in other]
                 arrays.append(label.append(appended))
-            return MultiIndex.from_arrays(arrays, names=self.names)
+            return MultiIndex.from_arrays(arrays, names=self.names, dropna=dropna)
 
         to_concat = (self.values, ) + tuple(k._values for k in other)
         new_tuples = np.concatenate(to_concat)

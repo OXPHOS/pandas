@@ -261,7 +261,7 @@ def safe_sort(values, labels=None, na_sentinel=-1, assume_unique=False):
     return ordered, _ensure_platform_int(new_labels)
 
 
-def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None):
+def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None, dropna=True):
     """
     Encode input values as an enumerated type or categorical variable
 
@@ -301,11 +301,12 @@ def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None):
 
     table = hash_klass(size_hint or len(vals))
     uniques = vec_klass()
-    labels = table.get_labels(vals, uniques, 0, na_sentinel, True)
-
+    labels = table.get_labels(vals, uniques, 0, na_sentinel, dropna)
+    print "algo.factorize.dropna", dropna
     labels = _ensure_platform_int(labels)
 
     uniques = uniques.to_array()
+    print "uniques=", uniques
 
     if sort and len(uniques) > 0:
         uniques, labels = safe_sort(uniques, labels, na_sentinel=na_sentinel,

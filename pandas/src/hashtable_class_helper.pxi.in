@@ -617,14 +617,14 @@ cdef class PyObjectHashTable(HashTable):
             int ret = 0
             object val
             khiter_t k
-
+        print "pyx.check_null", check_null
         labels = np.empty(n, dtype=np.int64)
 
         for i in range(n):
             val = values[i]
             hash(val)
 
-            if check_null and val != val or val is None:
+            if check_null and (val != val or val is None):
                 labels[i] = na_sentinel
                 continue
 

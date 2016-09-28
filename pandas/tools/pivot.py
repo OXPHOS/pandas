@@ -117,8 +117,8 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
         if len(to_filter) < len(data.columns):
             data = data[to_filter]
 
-    grouped = data.groupby(keys)
-    agged = grouped.agg(aggfunc)
+    grouped = data.groupby(keys, dropna=dropna)
+    agged = grouped.agg(aggfunc, dropna=dropna)
 
     table = agged
     if table.index.nlevels > 1:
@@ -136,7 +136,7 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
 
         try:
             m = MultiIndex.from_arrays(cartesian_product(table.columns.levels),
-                                       names=table.columns.names)
+                                       names=table.columns.names, dropna=False)
             table = table.reindex_axis(m, axis=1)
         except AttributeError:
             pass  # it's a single level or a series
@@ -155,7 +155,8 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
             data = data[data.notnull().all(axis=1)]
         table = _add_margins(table, data, values, rows=index,
                              cols=columns, aggfunc=aggfunc,
-                             margins_name=margins_name)
+                             margins_name=margins_name,
+                             dropna=dropna)
 
     # discard the top level
     if values_passed and not values_multi and not table.empty:
@@ -171,7 +172,7 @@ DataFrame.pivot_table = pivot_table
 
 
 def _add_margins(table, data, values, rows, cols, aggfunc,
-                 margins_name='All'):
+                 margins_name='All', dropna=True):
     if not isinstance(margins_name, compat.string_types):
         raise ValueError('margins_name argument must be a string')
 
@@ -202,7 +203,7 @@ def _add_margins(table, data, values, rows, cols, aggfunc,
         marginal_result_set = _generate_marginal_results(table, data, values,
                                                          rows, cols, aggfunc,
                                                          grand_margin,
-                                                         margins_name)
+                                                         margins_name, dropna)
         if not isinstance(marginal_result_set, tuple):
             return marginal_result_set
         result, margin_keys, row_margin = marginal_result_set
@@ -261,7 +262,7 @@ def _compute_grand_margin(data, values, aggfunc,
 
 def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
                                grand_margin,
-                               margins_name='All'):
+                               margins_name='All', dropna=True):
     if len(cols) > 0:
         # need to "interleave" the margins
         table_pieces = []
@@ -271,10 +272,10 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
             return (key, margins_name) + ('',) * (len(cols) - 1)
 
         if len(rows) > 0:
-            margin = data[rows + values].groupby(rows).agg(aggfunc)
+            margin = data[rows + values].groupby(rows, dropna=dropna).agg(aggfunc)
             cat_axis = 1
 
-            for key, piece in table.groupby(level=0, axis=cat_axis):
+            for key, piece in table.groupby(level=0, axis=cat_axis, dropna=dropna):
                 all_key = _all_key(key)
 
                 # we are going to mutate this, so need to copy!
@@ -299,7 +300,7 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
                 table_pieces.append(Series(margin[key], index=[all_key]))
                 margin_keys.append(all_key)
 
-        result = concat(table_pieces, axis=cat_axis)
+        result = concat(table_pieces, axis=cat_axis, dropna=dropna)
 
         if len(rows) == 0:
             return result
@@ -308,7 +309,7 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
         margin_keys = table.columns
 
     if len(cols) > 0:
-        row_margin = data[cols + values].groupby(cols).agg(aggfunc)
+        row_margin = data[cols + values].groupby(cols, dropna=dropna).agg(aggfunc)
         row_margin = row_margin.stack()
 
         # slight hack
