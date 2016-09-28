@@ -877,7 +877,7 @@ class MultiIndex(Index):
                           names=names, verify_integrity=False, dropna=dropna)
 
     @classmethod
-    def from_tuples(cls, tuples, sortorder=None, names=None, dropna=True):
+    def from_tuples(cls, tuples, sortorder=None, names=None):
         """
         Convert list of tuples to MultiIndex
 
@@ -919,8 +919,7 @@ class MultiIndex(Index):
         else:
             arrays = lzip(*tuples)
 
-        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names,
-                                      dropna=dropna)
+        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names)
 
     @classmethod
     def from_product(cls, iterables, sortorder=None, names=None):
