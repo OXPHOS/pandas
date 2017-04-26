@@ -559,7 +559,7 @@ class MultiIndex(Index):
         return mi.values
 
     @Appender(_index_shared_docs['_get_grouper_for_level'])
-    def _get_grouper_for_level(self, mapper, level, dropna=True):
+    def _get_grouper_for_level(self, mapper, level):
         indexer = self.labels[level]
         level_index = self.levels[level]
 
@@ -569,7 +569,7 @@ class MultiIndex(Index):
             grouper = level_values.map(mapper)
             return grouper, None, None
 
-        labels, uniques = algos.factorize(indexer, sort=True, dropna=dropna)
+        labels, uniques = algos.factorize(indexer, sort=True)
 
         if len(uniques) > 0 and uniques[0] == -1:
             # Handle NAs
@@ -721,7 +721,7 @@ class MultiIndex(Index):
         from pandas.util.hashing import hash_tuples
         return hash_tuples(self)
 
-    def _hashed_indexing_key(self, key, dropna=True):
+    def _hashed_indexing_key(self, key):
         """
         validate and return the hash for the provided key
 
@@ -754,7 +754,7 @@ class MultiIndex(Index):
             return k
         key = tuple([f(k, stringify)
                      for k, stringify in zip(key, self._have_mixed_levels)])
-        return hash_tuples(key, dropna=dropna)
+        return hash_tuples(key)
 
     @Appender(base._shared_docs['duplicated'] % _index_doc_kwargs)
     def duplicated(self, keep='first'):
@@ -1043,7 +1043,7 @@ class MultiIndex(Index):
         return 0
 
     @classmethod
-    def from_arrays(cls, arrays, sortorder=None, names=None, dropna=True):
+    def from_arrays(cls, arrays, sortorder=None, names=None):
         """
         Convert arrays to MultiIndex
 
@@ -1083,7 +1083,7 @@ class MultiIndex(Index):
 
         from pandas.core.categorical import _factorize_from_iterables
 
-        labels, levels = _factorize_from_iterables(arrays, dropna)
+        labels, levels = _factorize_from_iterables(arrays)
         if names is None:
             names = [getattr(arr, "name", None) for arr in arrays]
 
@@ -1091,7 +1091,7 @@ class MultiIndex(Index):
                           names=names, verify_integrity=False)
 
     @classmethod
-    def from_tuples(cls, tuples, sortorder=None, names=None, dropna=True):
+    def from_tuples(cls, tuples, sortorder=None, names=None):
         """
         Convert list of tuples to MultiIndex
 
@@ -1133,7 +1133,7 @@ class MultiIndex(Index):
         else:
             arrays = lzip(*tuples)
 
-        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names, dropna=dropna)
+        return MultiIndex.from_arrays(arrays, sortorder=sortorder, names=names)
 
     @classmethod
     def from_product(cls, iterables, sortorder=None, names=None):
@@ -1322,10 +1322,10 @@ class MultiIndex(Index):
         return tuple(len(x) for x in self.levels)
 
     @Appender(_index_shared_docs['__contains__'] % _index_doc_kwargs)
-    def __contains__(self, key, dropna=True):
+    def __contains__(self, key):
         hash(key)
         try:
-            self.get_loc(key, dropna=dropna)
+            self.get_loc(key)
             return True
         except LookupError:
             return False
@@ -1929,7 +1929,7 @@ class MultiIndex(Index):
             else:
                 return start + section.searchsorted(idx, side=side)
 
-    def get_loc(self, key, method=None, dropna=True):
+    def get_loc(self, key, method=None):
         """
         Get integer location, slice or boolean mask for requested label or
         tuple.  If the key is past the lexsort depth, the return may be a

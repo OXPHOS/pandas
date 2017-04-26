@@ -166,7 +166,7 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
             data = data[data.notnull().all(axis=1)]
         table = _add_margins(table, data, values, rows=index,
                              cols=columns, aggfunc=aggfunc,
-                             margins_name=margins_name, dropna=False)
+                             margins_name=margins_name)
 
     if fill_value is not None:
         table = table.fillna(value=fill_value, downcast='infer')

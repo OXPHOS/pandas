@@ -2374,7 +2374,7 @@ class Grouping(object):
                 self.name = index.names[level]
 
             self.grouper, self._labels, self._group_index = \
-                index._get_grouper_for_level(self.grouper, level, dropna=dropna)
+                index._get_grouper_for_level(self.grouper, level)
 
         else:
             if self.grouper is None and self.name is not None:
