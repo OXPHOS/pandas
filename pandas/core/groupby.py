@@ -1615,7 +1615,7 @@ GroupBy._add_numeric_operations()
 
 
 @Appender(GroupBy.__doc__)
-def groupby(obj, by, dropna, **kwds):
+def groupby(obj, by, **kwds):
     if isinstance(obj, Series):
         klass = SeriesGroupBy
     elif isinstance(obj, DataFrame):
@@ -1623,7 +1623,7 @@ def groupby(obj, by, dropna, **kwds):
     else:  # pragma: no cover
         raise TypeError('invalid type: %s' % type(obj))
 
-    return klass(obj, by, dropna=dropna, **kwds)
+    return klass(obj, by, **kwds)
 
 
 def _get_axes(group):
