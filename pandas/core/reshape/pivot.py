@@ -136,12 +136,11 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
     agged = grouped.agg(aggfunc)
 
     table = agged
-    print table
     if table.index.nlevels > 1:
         to_unstack = [agged.index.names[i] or i
                       for i in range(len(index), len(keys))]
         table = agged.unstack(to_unstack)
-    print table
+
     if not dropna:
         try:
             m = MultiIndex.from_arrays(cartesian_product(table.index.levels),
@@ -154,7 +153,6 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
             m = MultiIndex.from_arrays(cartesian_product(table.columns.levels),
                                        names=table.columns.names)
             table = table.reindex_axis(m, axis=1)
-            print table
         except AttributeError:
             pass  # it's a single level or a series
 
@@ -166,12 +164,10 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
             data = data[data.notnull().all(axis=1)]
         table = _add_margins(table, data, values, rows=index,
                              cols=columns, aggfunc=aggfunc,
-                             margins_name=margins_name, dropna=False)
+                             margins_name=margins_name)
 
     if fill_value is not None:
         table = table.fillna(value=fill_value, downcast='infer')
-
-    print table
 
     # discard the top level
     if values_passed and not values_multi and not table.empty and \
@@ -192,7 +188,7 @@ DataFrame.pivot_table = pivot_table
 
 
 def _add_margins(table, data, values, rows, cols, aggfunc,
-                 margins_name='All', dropna=True):
+                 margins_name='All'):
     if not isinstance(margins_name, compat.string_types):
         raise ValueError('margins_name argument must be a string')
 
@@ -223,7 +219,7 @@ def _add_margins(table, data, values, rows, cols, aggfunc,
         marginal_result_set = _generate_marginal_results(table, data, values,
                                                          rows, cols, aggfunc,
                                                          grand_margin,
-                                                         margins_name, dropna)
+                                                         margins_name)
         if not isinstance(marginal_result_set, tuple):
             return marginal_result_set
         result, margin_keys, row_margin = marginal_result_set
@@ -235,7 +231,6 @@ def _add_margins(table, data, values, rows, cols, aggfunc,
         result, margin_keys, row_margin = marginal_result_set
 
     row_margin = row_margin.reindex(result.columns)
-    
     # populate grand margin
     for k in margin_keys:
         if isinstance(k, compat.string_types):
@@ -282,7 +277,8 @@ def _compute_grand_margin(data, values, aggfunc,
 
 
 def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
-                               grand_margin, margins_name='All', dropna=True):
+                               grand_margin,
+                               margins_name='All'):
     if len(cols) > 0:
         # need to "interleave" the margins
         table_pieces = []
@@ -292,10 +288,10 @@ def _generate_marginal_results(table, data, values, rows, cols, aggfunc,
             return (key, margins_name) + ('',) * (len(cols) - 1)
 
         if len(rows) > 0:
-            margin = data[rows + values].groupby(rows, dropna=dropna).agg(aggfunc)
+            margin = data[rows + values].groupby(rows).agg(aggfunc)
             cat_axis = 1
 
-            for key, piece in table.groupby(level=0, axis=cat_axis, dropna=dropna):
+            for key, piece in table.groupby(level=0, axis=cat_axis):
                 all_key = _all_key(key)
 
                 # we are going to mutate this, so need to copy!
