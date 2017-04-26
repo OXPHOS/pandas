@@ -234,7 +234,7 @@ class Categorical(PandasObject):
     __array_priority__ = 1000
     _typ = 'categorical'
 
-    def __init__(self, values, categories=None, ordered=False, fastpath=False, dropna=True):
+    def __init__(self, values, categories=None, ordered=False, fastpath=False):
 
         self._validate_ordered(ordered)
 
@@ -281,9 +281,9 @@ class Categorical(PandasObject):
 
         if categories is None:
             try:
-                codes, categories = factorize(values, sort=True, dropna=dropna)
+                codes, categories = factorize(values, sort=True)
             except TypeError:
-                codes, categories = factorize(values, sort=False, dropna=dropna)
+                codes, categories = factorize(values, sort=False)
                 if ordered:
                     # raise, as we don't have a sortable data structure and so
                     # the user should give us one by specifying categories
@@ -2111,7 +2111,7 @@ def _convert_to_list_like(list_like):
         return [list_like]
 
 
-def _factorize_from_iterable(values, dropna=True):
+def _factorize_from_iterable(values):
     """
     Factorize an input `values` into `categories` and `codes`. Preserves
     categorical dtype in `categories`.
@@ -2142,13 +2142,13 @@ def _factorize_from_iterable(values, dropna=True):
                                       ordered=values.ordered)
         codes = values.codes
     else:
-        cat = Categorical(values, ordered=True, dropna=dropna)
+        cat = Categorical(values, ordered=True)
         categories = cat.categories
         codes = cat.codes
     return codes, categories
 
 
-def _factorize_from_iterables(iterables, dropna=True):
+def _factorize_from_iterables(iterables):
     """
     A higher-level wrapper over `_factorize_from_iterable`.
 
@@ -2170,4 +2170,4 @@ def _factorize_from_iterables(iterables, dropna=True):
     if len(iterables) == 0:
         # For consistency, it should return a list of 2 lists.
         return [[], []]
-    return map(list, lzip(*[_factorize_from_iterable(it, dropna) for it in iterables]))
+    return map(list, lzip(*[_factorize_from_iterable(it) for it in iterables]))
