@@ -457,6 +457,7 @@ pandas.DataFrame.%(name)s
         if _axis is None:
             _axis = getattr(self, 'axis', 0)
         _level = kwargs.pop('_level', None)
+        dropna = kwargs.pop('dropna', True)
 
         if isinstance(arg, compat.string_types):
             return self._try_aggregate_string_function(arg, *args,

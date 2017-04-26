@@ -132,8 +132,8 @@ def pivot_table(data, values=None, index=None, columns=None, aggfunc='mean',
                 pass
         values = list(values)
 
-    grouped = data.groupby(keys)
-    agged = grouped.agg(aggfunc)
+    grouped = data.groupby(keys, dropna=dropna)
+    agged = grouped.agg(aggfunc)#, dropna=dropna)
 
     table = agged
     if table.index.nlevels > 1:

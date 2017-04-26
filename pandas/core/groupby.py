@@ -359,7 +359,7 @@ class _GroupBy(PandasObject, SelectionMixin):
     _group_selection = None
     _apply_whitelist = frozenset([])
 
-    def __init__(self, obj, keys=None, axis=0, level=None,
+    def __init__(self, obj, keys=None, dropna=True, axis=0, level=None,
                  grouper=None, exclusions=None, selection=None, as_index=True,
                  sort=True, group_keys=True, squeeze=False, **kwargs):
 
@@ -369,7 +369,6 @@ class _GroupBy(PandasObject, SelectionMixin):
             obj._consolidate_inplace()
 
         self.level = level
-
         if not as_index:
             if not isinstance(obj, DataFrame):
                 raise TypeError('as_index=False only valid with DataFrame')
@@ -388,7 +387,8 @@ class _GroupBy(PandasObject, SelectionMixin):
                                                     axis=axis,
                                                     level=level,
                                                     sort=sort,
-                                                    mutated=self.mutated)
+                                                    mutated=self.mutated,
+                                                    dropna=dropna)
 
         self.obj = obj
         self.axis = obj._get_axis_number(axis)
@@ -1614,7 +1614,7 @@ GroupBy._add_numeric_operations()
 
 
 @Appender(GroupBy.__doc__)
-def groupby(obj, by, **kwds):
+def groupby(obj, by, dropna=True, **kwds):
     if isinstance(obj, Series):
         klass = SeriesGroupBy
     elif isinstance(obj, DataFrame):
@@ -1622,7 +1622,7 @@ def groupby(obj, by, **kwds):
     else:  # pragma: no cover
         raise TypeError('invalid type: %s' % type(obj))
 
-    return klass(obj, by, **kwds)
+    return klass(obj, by, dropna=dropna, **kwds)
 
 
 def _get_axes(group):
@@ -1650,7 +1650,7 @@ class BaseGrouper(object):
     """
 
     def __init__(self, axis, groupings, sort=True, group_keys=True,
-                 mutated=False):
+                 mutated=False, dropna=True):
         self._filter_empty_groups = self.compressed = len(groupings) != 1
         self.axis = axis
         self.groupings = groupings
@@ -2059,7 +2059,7 @@ class BaseGrouper(object):
         return result, names
 
     def aggregate(self, values, how, axis=0):
-        return self._cython_operation('aggregate', values, how, axis)
+        return self._cython_operation('aggregate', values, how, axis, dropna=dropna)
 
     def transform(self, values, how, axis=0):
         return self._cython_operation('transform', values, how, axis)
@@ -2339,7 +2339,7 @@ class Grouping(object):
     """
 
     def __init__(self, index, grouper=None, obj=None, name=None, level=None,
-                 sort=True, in_axis=False):
+                 sort=True, in_axis=False, dropna=True):
 
         self.name = name
         self.level = level
@@ -2427,13 +2427,13 @@ class Grouping(object):
 
         # if we have a date/time-like grouper, make sure that we have
         # Timestamps like
-        if getattr(self.grouper, 'dtype', None) is not None:
-            if is_datetime64_dtype(self.grouper):
-                from pandas import to_datetime
-                self.grouper = to_datetime(self.grouper)
-            elif is_timedelta64_dtype(self.grouper):
-                from pandas import to_timedelta
-                self.grouper = to_timedelta(self.grouper)
+        # if getattr(self.grouper, 'dtype', None) is not None:
+        #     if is_datetime64_dtype(self.grouper):
+        #         from pandas import to_datetime
+        #         self.grouper = to_datetime(self.grouper)
+        #     elif is_timedelta64_dtype(self.grouper):
+        #         from pandas import to_timedelta
+        #         self.grouper = to_timedelta(self.grouper)
 
     def __repr__(self):
         return 'Grouping({0})'.format(self.name)
@@ -2480,7 +2480,7 @@ class Grouping(object):
 
 
 def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
-                 mutated=False):
+                 mutated=False, dropna=True):
     """
     create and return a BaseGrouper, which is an internal
     mapping of how to create the grouper indexers.
@@ -2633,7 +2633,8 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
                         name=name,
                         level=level,
                         sort=sort,
-                        in_axis=in_axis) \
+                        in_axis=in_axis,
+                        dropna=dropna) \
             if not isinstance(gpr, Grouping) else gpr
 
         groupings.append(ping)
@@ -2642,7 +2643,7 @@ def _get_grouper(obj, key=None, axis=0, level=None, sort=True,
         raise ValueError('No group keys passed!')
 
     # create the internals grouper
-    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated)
+    grouper = BaseGrouper(group_axis, groupings, sort=sort, mutated=mutated, dropna=dropna)
 
     return grouper, exclusions, obj
 
@@ -3399,7 +3400,8 @@ class NDFrameGroupBy(GroupBy):
     def aggregate(self, arg, *args, **kwargs):
 
         _level = kwargs.pop('_level', None)
-        result, how = self._aggregate(arg, _level=_level, *args, **kwargs)
+        dropna = kwargs.pop('dropna', True)
+        result, how = self._aggregate(arg, _level=_level, dropna=dropna, *args, **kwargs)
         if how is None:
             return result
 
