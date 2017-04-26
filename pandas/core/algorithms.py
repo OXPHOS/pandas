@@ -519,7 +519,7 @@ def safe_sort(values, labels=None, na_sentinel=-1, assume_unique=False):
     return ordered, _ensure_platform_int(new_labels)
 
 
-def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None, dropna=True):
+def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None, dropna=False):
     """
     Encode input values as an enumerated type or categorical variable
 
