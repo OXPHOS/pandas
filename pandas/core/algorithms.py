@@ -222,17 +222,6 @@ def _get_data_algo(values, func_map):
 
     return f, values
 
-def _get_data_algo_hashtables(values):
-
-    if is_categorical_dtype(values):
-        values = values._values_for_rank()
-
-    values, dtype, ndtype = _ensure_data(values)
-
-    f = _hashtables.get(ndtype, _hashtables['object'])
-    return f, values
-
-
 
 # --------------- #
 # top-level algos #
@@ -555,14 +544,10 @@ def factorize(values, sort=False, order=None, na_sentinel=-1, size_hint=None):
     PeriodIndex
     """
 
-    # values = _ensure_arraylike(values)
-    # for i in range(0, len(values)):
-    #     if isnull(values[i]):
-    #         print "NONE"
-    #         values[i] = 'test'
+    values = _ensure_arraylike(values)
     original = values
     values, dtype, _ = _ensure_data(values)
-    (hash_klass, vec_klass), values = _get_data_algo_hashtables(values)
+    (hash_klass, vec_klass), values = _get_data_algo(values, _hashtables)
 
     table = hash_klass(size_hint or len(values))
     uniques = vec_klass()
