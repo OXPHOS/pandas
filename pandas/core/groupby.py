@@ -361,7 +361,8 @@ class _GroupBy(PandasObject, SelectionMixin):
 
     def __init__(self, obj, keys=None, axis=0, level=None,
                  grouper=None, exclusions=None, selection=None, as_index=True,
-                 sort=True, group_keys=True, squeeze=False, dropna=True, **kwargs):
+                 sort=True, group_keys=True, squeeze=False, dropna=True,
+                 **kwargs):
 
         self._selection = selection
 
@@ -2349,7 +2350,7 @@ class Grouping(object):
         self.sort = sort
         self.obj = obj
         self.in_axis = in_axis
-        self.dropna=dropna
+        self.dropna = dropna
 
         # right place for this?
         if isinstance(grouper, (Series, Index)) and name is None:
