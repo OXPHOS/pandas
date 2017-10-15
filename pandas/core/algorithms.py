@@ -219,7 +219,6 @@ def _get_data_algo(values, func_map):
             ndtype = 'string'
 
     f = func_map.get(ndtype, func_map['object'])
-
     return f, values
 
 
@@ -462,6 +461,9 @@ def safe_sort(values, labels=None, na_sentinel=-1, assume_unique=False):
     if not is_list_like(values):
         raise TypeError("Only list-like objects are allowed to be passed to"
                         "safe_sort as values")
+    import pickle
+    with open('lastvalue', 'w') as f:
+        pickle.dump(values, f)
     values = np.asarray(values)
 
     def sort_mixed(values):

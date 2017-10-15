@@ -670,11 +670,15 @@ cdef class StringHashTable(HashTable):
                 vecs[i] = v
             else:
                 labels[i] = na_sentinel
+                if not dropna:
+                    v = util.get_c_string(self.na_string_sentinel)
+                    vecs[i] = v
+
 
         # compute
         with nogil:
             for i in range(n):
-                if labels[i] == na_sentinel:
+                if dropna and labels[i] == na_sentinel:
                     continue
 
                 v = vecs[i]
@@ -826,15 +830,25 @@ cdef class PyObjectHashTable(HashTable):
             khiter_t k
 
         labels = np.empty(n, dtype=np.int64)
+        na_label = -1
 
         for i in range(n):
             val = values[i]
             hash(val)
 
-            if dropna:
-                if (check_null and val != val) or val is None:
+            if (check_null and val != val) or val is None:
+                if dropna:
                     labels[i] = na_sentinel
-                    continue
+                elif na_label < 0:
+                    k = kh_put_pymap(self.table, <PyObject*>val, &ret)
+                    self.table.vals[k] = count
+                    uniques.append(val)
+                    labels[i] = count
+                    na_label = count
+                    count += 1
+                else:
+                    labels[i] = na_label
+                continue
 
             k = kh_get_pymap(self.table, <PyObject*>val)
             if k != self.table.n_buckets:

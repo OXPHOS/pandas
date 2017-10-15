@@ -832,7 +832,7 @@ class TestMergeMulti(tm.TestCase):
         i = np.random.permutation(len(left))
         right = left.iloc[i, :-1]
         right['5th'] = - bind_cols(right)
-        right.set_index(icols, inplace=True)
+        right.set_index(icols, inplace=True, dropna=True)
 
         run_asserts(left, right)
 

@@ -2856,7 +2856,7 @@ it is assumed to be aliases for the column names.')
                                             axis=axis)
 
     def set_index(self, keys, drop=True, append=False, inplace=False,
-                  verify_integrity=False):
+                  verify_integrity=False, dropna=False):
         """
         Set the DataFrame index (row labels) using one or more existing
         columns. By default yields a new object.
@@ -2874,6 +2874,9 @@ it is assumed to be aliases for the column names.')
             Check the new index for duplicates. Otherwise defer the check until
             necessary. Setting to False will improve the performance of this
             method
+        dropna : boolean, defaulf False
+            Drop NA values. If false, this method will fail on multiple 
+            NA values.
 
         Examples
         --------
@@ -2930,7 +2933,7 @@ it is assumed to be aliases for the column names.')
                     to_remove.append(col)
             arrays.append(level)
 
-        index = MultiIndex.from_arrays(arrays, names=names)
+        index = MultiIndex.from_arrays(arrays, names=names, dropna=dropna)
 
         if verify_integrity and not index.is_unique:
             duplicates = index.get_duplicates()
